@@ -34,7 +34,7 @@ void spi_write_sseg(uint8_t data)
 	return;
 }
 
-void spi_write_dac(int data)
+void spi_write_dac(uint16_t data)
 {
 	PORTB = (0<<SS);
 	//SPDR = (data>>8) & 0x1F;

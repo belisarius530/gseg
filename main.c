@@ -1,14 +1,73 @@
 #define F_CPU 16000000UL
-#define KPROP 2.5
-#define KDER 5
-#define KINT 1
 
 #include <util/delay.h>
-#include <stdio.h>
+//#include <stdio.h>
 #include <avr/io.h>
-#include <math.h>
+//#include <math.h>
 #include <avr/interrupt.h>
 
+#include "twi.h"
+#include "uart.h"
+#include "imu.h"
+#include "timer.h"
+#include "spi.h"
+#include "pid.h"
+
+
+volatile uint8_t timer_flag = 0;
+
+int main(void)
+{
+	int16_t x_accl = 0;
+	int16_t y_accl = 0;
+	int16_t z_accl = 0;
+	int16_t x_gyro = 0;
+	int16_t y_gyro = 0;
+	int16_t z_gyro = 0;
+	uint16_t count = 0;
+	
+	twi_init();
+	usart_init();
+	timer_init();
+	accl_init();
+	gyro_init();
+	spi_init();
+	sei();
+	
+	float temp_val = 0.0;
+	
+	while(1)
+	{
+		if(timer_flag > 0)
+		{
+
+			accl_position(&x_accl, &y_accl, &z_accl);
+		    gyro_position(&x_gyro, &y_gyro, &z_gyro);
+			temp_val =  pid( 0, compute_pitch(.5, y_accl, z_accl, x_gyro) );
+			spi_write_dac( 2048 + (int16_t)(1300*temp_val) );
+			if(!(count++%50))
+			{
+				usart_send( (int8_t)(57.0*temp_val) );
+				//spi_write_dac(2048 + (int16_t)(1300*temp_val) );
+			}
+      
+			timer_flag = 0;
+		}
+/*		_delay_ms(500);
+		spi_write_dac(2048);
+		_delay_ms(500);
+		spi_write_dac(0);*/
+	}
+	return 0;
+}
+	
+
+ISR(TIMER1_COMPA_vect)
+{
+	timer_flag = 1;
+}
+
+/*
 #include "adc.h"
 #include "uart.h"
 #include "spi.h" 
@@ -82,3 +141,4 @@ ISR(TIMER1_COMPA_vect)
 {
    	timer_flag = 1;
 }	
+*/

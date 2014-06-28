@@ -46,7 +46,7 @@ void spi_init(void);
 
 void spi_write_sseg(uint8_t data);
 
-void spi_write_dac(int data);
+void spi_write_dac(uint16_t data);
 
 uint8_t spi_read_gyro(uint8_t address);
 
